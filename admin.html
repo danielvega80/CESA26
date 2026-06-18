@@ -103,6 +103,14 @@
   .result-item .team-label{font-size:12px;color:var(--text-muted);}
   .result-item .badge-match{font-size:10px;font-weight:800;padding:2px 7px;border-radius:5px;background:rgba(79,174,130,.18);color:var(--green);margin-left:6px;}
   .result-item .badge-nomatch{font-size:10px;font-weight:800;padding:2px 7px;border-radius:5px;background:rgba(226,97,90,.15);color:var(--danger);margin-left:6px;}
+
+  /* Parciales */
+  .parciales-wrap{margin-top:10px;border-top:1px solid var(--card-border);padding-top:10px;}
+  .parciales-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;}
+  .set-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+  .set-row .set-num{font-size:11px;color:var(--gold-dim);font-family:var(--font-mono);width:40px;flex:none;}
+  .set-row input{width:52px;background:var(--bg);color:var(--text);border:1px solid var(--card-border);border-radius:6px;padding:7px;font-size:14px;text-align:center;}
+  .set-row .sep{color:var(--text-muted);}
 </style>
 </head>
 <body>
@@ -383,6 +391,7 @@ function renderLista(){
         ${campo('Sets local',`<input type="number" min="0" data-f="setsLocal" data-i="${i}" value="${p.setsLocal??0}">`)}
         ${campo('Sets visitante',`<input type="number" min="0" data-f="setsVisitante" data-i="${i}" value="${p.setsVisitante??0}">`)}
       </div>
+      <div class="parciales-wrap" id="parciales-${i}"></div>
       ${campo('Lugar',`<input type="text" data-f="lugar" data-i="${i}" value="${p.lugar??''}">`)}
       <div class="check-row">
         <label><input type="checkbox" data-f="esAsturias" data-i="${i}" ${p.esAsturias?'checked':''}> Confirmado Asturias</label>
@@ -397,6 +406,40 @@ function renderLista(){
   listEl.querySelectorAll('[data-del]').forEach(btn=>{
     btn.onclick = ()=>{ if(confirm('¿Eliminar este partido?')){ DATA.partidos.splice(parseInt(btn.dataset.del),1); DIRTY=true; renderLista(); } };
   });
+  // Renderizar parciales iniciales
+  indices.forEach(({p,i})=>renderParciales(i));
+}
+
+function renderParciales(i){
+  const p = DATA.partidos[i];
+  const wrap = document.getElementById('parciales-'+i);
+  if(!wrap) return;
+  const total = (p.setsLocal||0) + (p.setsVisitante||0);
+  if(total === 0){ wrap.innerHTML=''; return; }
+  if(!p.parciales) p.parciales = [];
+  // Ensure array length matches total sets
+  while(p.parciales.length < total) p.parciales.push({l:25, v:0});
+  p.parciales = p.parciales.slice(0, total);
+  let html = `<p class="parciales-label">Puntuación de cada set</p>`;
+  for(let s=0; s<total; s++){
+    const par = p.parciales[s]||{l:25,v:0};
+    html += `<div class="set-row">
+      <span class="set-num">Set ${s+1}</span>
+      <input type="number" min="0" max="35" value="${par.l}" data-pi="${i}" data-ps="${s}" data-pf="l" placeholder="25">
+      <span class="sep">–</span>
+      <input type="number" min="0" max="35" value="${par.v}" data-pi="${i}" data-ps="${s}" data-pf="v" placeholder="0">
+    </div>`;
+  }
+  wrap.innerHTML = html;
+  wrap.querySelectorAll('[data-pi]').forEach(inp=>{
+    inp.oninput = ()=>{
+      const pi=parseInt(inp.dataset.pi), ps=parseInt(inp.dataset.ps), pf=inp.dataset.pf;
+      if(!DATA.partidos[pi].parciales) DATA.partidos[pi].parciales=[];
+      if(!DATA.partidos[pi].parciales[ps]) DATA.partidos[pi].parciales[ps]={l:0,v:0};
+      DATA.partidos[pi].parciales[ps][pf] = parseInt(inp.value)||0;
+      DIRTY=true;
+    };
+  });
 }
 function onCampoChange(e){
   const i=parseInt(e.target.dataset.i), f=e.target.dataset.f;
@@ -404,6 +447,7 @@ function onCampoChange(e){
   if(e.target.type==='checkbox') v=e.target.checked;
   else if(['numero','setsLocal','setsVisitante'].includes(f)) v=v===''?'':parseInt(v);
   DATA.partidos[i][f]=v; DIRTY=true;
+  if(f==='setsLocal'||f==='setsVisitante') renderParciales(i);
 }
 
 /* ── GUARDAR / DESCARTAR ─────────────────────── */

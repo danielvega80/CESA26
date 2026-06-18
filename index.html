@@ -62,6 +62,7 @@
   .last-result.win .tag{background:rgba(79,174,130,.18);color:var(--green);}
   .last-result.loss .tag{background:rgba(226,97,90,.15);color:var(--danger);}
   .last-result .score{font-family:var(--font-mono);color:var(--text);font-weight:700;}
+  .parciales-line{font-size:11px;color:var(--text-muted);font-family:var(--font-mono);margin-top:3px;}
 
   .empty-cat{font-size:12px;color:var(--text-muted);background:var(--card);border:1px dashed var(--card-border);border-radius:12px;padding:14px;text-align:center;}
 
@@ -259,15 +260,24 @@ function renderProximoCard(p){
 function renderUltimoLinea(p){
   const asturiaEsLocal = /ASTURIA/i.test(p.local||'');
   const setsAsturias = asturiaEsLocal ? p.setsLocal : p.setsVisitante;
-  const setsRival = asturiaEsLocal ? p.setsVisitante : p.setsLocal;
+  const setsRival    = asturiaEsLocal ? p.setsVisitante : p.setsLocal;
   const rival = nombreEquipo(asturiaEsLocal ? p.visitante : p.local);
   const gano = setsAsturias > setsRival;
+  let parcialesHtml = '';
+  if(p.parciales && p.parciales.length){
+    const txt = p.parciales.map((s,idx)=>{
+      const lScore = asturiaEsLocal ? s.l : s.v;
+      const vScore = asturiaEsLocal ? s.v : s.l;
+      return `${lScore}-${vScore}`;
+    }).join(' · ');
+    parcialesHtml = `<p class="parciales-line">${txt}</p>`;
+  }
   return `
     <p class="last-result ${gano?'win':'loss'}">
       <span class="tag">${gano?'GANADO':'PERDIDO'}</span>
       <span class="score">${setsAsturias}-${setsRival}</span>
       vs ${rival}
-    </p>`;
+    </p>${parcialesHtml}`;
 }
 
 function renderAgendaEn(containerEl, partidos){
@@ -287,6 +297,9 @@ function renderAgendaEn(containerEl, partidos){
       const resultado = p.estado==='jugado'
         ? `<span class="match-result">${p.setsLocal}-${p.setsVisitante}</span>`
         : `<span>${p.hora||''}</span>`;
+      const parcialesStr = (p.estado==='jugado' && p.parciales && p.parciales.length)
+        ? `<div class="parciales-line" style="margin-top:5px;">${p.parciales.map(s=>`${s.l}-${s.v}`).join(' · ')}</div>`
+        : '';
       card.innerHTML = `
         <div class="match-top">
           <span class="badge ${confirmado?'confirmado':'posible'}">${confirmado?'Confirmado':'Posible'}</span>
@@ -300,6 +313,7 @@ function renderAgendaEn(containerEl, partidos){
         </div>
         <div class="match-meta">${mapsAnchor(p.lugar)}</div>
         ${p.notaPosible ? `<div class="match-note">${p.notaPosible}</div>` : ''}
+        ${parcialesStr}
       `;
       containerEl.appendChild(card);
     });
