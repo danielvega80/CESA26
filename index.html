@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Asturias · CESA</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="theme-color" content="#0B1726">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Asturias CESA">
+<style>
+  :root{
+    --bg:#0B1726;
+    --bg-elev:#0F1F33;
+    --card:#15304E;
+    --card-border:#21466E;
+    --gold:#F2A93B;
+    --gold-dim:#C98B2C;
+    --green:#4FAE82;
+    --text:#F4F7FB;
+    --text-muted:#92A6C2;
+    --danger:#E2615A;
+    --font-display:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    --font-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--font-display);-webkit-font-smoothing:antialiased;}
+  body{min-height:100%;padding-bottom:90px;}
+  #app{max-width:560px;margin:0 auto;}
+
+  .topbar{padding:22px 18px 16px;background:linear-gradient(180deg,var(--bg-elev),var(--bg));border-bottom:1px solid var(--card-border);}
+  .eyebrow{margin:0 0 4px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:700;}
+  h1{margin:0;font-size:26px;letter-spacing:.04em;text-transform:uppercase;font-weight:800;}
+  h1 .accent{color:var(--gold);margin:0 6px;}
+  .subline{margin:6px 0 0;font-size:13px;color:var(--text-muted);}
+
+  main{padding:16px 18px 18px;}
+
+  .cat-block{margin-bottom:26px;}
+  .cat-name{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--text);font-weight:800;margin:0 0 8px;display:flex;align-items:center;gap:8px;}
+  .cat-name::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--gold);flex:none;}
+
+  .next-card{position:relative;background:var(--card);border:1px solid var(--card-border);border-top:3px solid var(--gold);border-radius:14px;padding:14px;}
+  .next-card .hero-num{font-family:var(--font-mono);color:var(--gold-dim);font-size:12px;}
+  .next-card .hero-teams{font-size:17px;font-weight:800;margin:6px 0 9px;line-height:1.3;}
+  .next-card .hero-teams .vs{color:var(--text-muted);font-weight:500;margin:0 6px;font-size:13px;}
+  .next-card .hero-foot{display:flex;flex-wrap:wrap;gap:9px;align-items:center;font-size:12px;color:var(--text-muted);}
+  .hero-status{font-family:var(--font-mono);font-weight:800;padding:4px 9px;border-radius:8px;font-size:12px;letter-spacing:.03em;}
+  .hero-status.upcoming{background:rgba(242,169,59,.15);color:var(--gold);}
+  .hero-status.live{background:rgba(79,174,130,.18);color:var(--green);}
+  .hero-status.live::before{content:"●";margin-right:6px;animation:pulse 1.4s infinite;}
+  .hero-status.done{background:rgba(79,174,130,.18);color:var(--green);}
+  .hero-status.pending-result{background:rgba(226,97,90,.15);color:var(--danger);}
+  .hero-note{margin-top:7px;font-size:11px;color:var(--gold-dim);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.25;}}
+
+  .last-result{margin:7px 2px 0;font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px;}
+  .last-result .tag{font-size:10px;font-weight:800;letter-spacing:.05em;padding:1px 6px;border-radius:5px;}
+  .last-result.win .tag{background:rgba(79,174,130,.18);color:var(--green);}
+  .last-result.loss .tag{background:rgba(226,97,90,.15);color:var(--danger);}
+  .last-result .score{font-family:var(--font-mono);color:var(--text);font-weight:700;}
+
+  .empty-cat{font-size:12px;color:var(--text-muted);background:var(--card);border:1px dashed var(--card-border);border-radius:12px;padding:14px;text-align:center;}
+
+  .ver-todos{display:block;margin:9px 0 0;background:none;border:none;color:var(--gold-dim);font-size:12px;font-weight:700;padding:4px 0;cursor:pointer;}
+  .cat-agenda{margin-top:8px;}
+
+  .badge{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:6px;}
+  .badge.confirmado{background:rgba(79,174,130,.18);color:var(--green);}
+  .badge.posible{background:transparent;color:var(--text-muted);border:1px dashed var(--text-muted);}
+
+  .date-header{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);font-weight:800;margin:14px 0 8px;}
+  .match-card{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:12px 13px;margin-bottom:9px;}
+  .match-card.posible{border-style:dashed;}
+  .match-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;}
+  .match-teams{font-size:14px;font-weight:700;line-height:1.35;}
+  .match-teams .vs{color:var(--text-muted);font-weight:400;margin:0 5px;font-size:12px;}
+  .match-meta{display:flex;flex-wrap:wrap;gap:9px;font-size:11px;color:var(--text-muted);margin-top:6px;}
+  .match-meta .mono{font-family:var(--font-mono);}
+  .match-result{font-family:var(--font-mono);font-weight:800;color:var(--green);font-size:13px;}
+  .match-note{font-size:11px;color:var(--gold-dim);margin-top:5px;}
+  .maps-link{color:var(--gold);text-decoration:none;font-size:12px;font-weight:700;}
+  .maps-link:active{opacity:.7;}
+
+  .empty{text-align:center;padding:60px 20px;color:var(--text-muted);}
+  .empty strong{display:block;color:var(--text);font-size:16px;margin-bottom:6px;}
+
+  .fab{position:fixed;bottom:18px;right:18px;width:52px;height:52px;border-radius:50%;background:var(--gold);color:#1A1305;border:none;font-size:20px;box-shadow:0 6px 18px rgba(0,0,0,.4);cursor:pointer;z-index:20;}
+
+  .sheet-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .2s;z-index:30;}
+  .sheet-backdrop.show{opacity:1;pointer-events:auto;}
+  .sheet{position:fixed;left:0;right:0;bottom:0;max-width:560px;margin:0 auto;background:var(--bg-elev);border:1px solid var(--card-border);border-bottom:none;border-radius:18px 18px 0 0;padding:14px 18px 26px;transform:translateY(105%);transition:transform .25s ease;z-index:31;max-height:82vh;overflow-y:auto;}
+  .sheet.show{transform:translateY(0);}
+  .sheet-handle{width:36px;height:4px;border-radius:3px;background:var(--card-border);margin:0 auto 14px;}
+  .sheet h2{margin:0 0 4px;font-size:17px;}
+  .sheet-help{font-size:12px;color:var(--text-muted);margin:0 0 12px;line-height:1.5;}
+  .sheet textarea{width:100%;min-height:120px;background:var(--bg);color:var(--text);border:1px solid var(--card-border);border-radius:10px;padding:10px;font-family:var(--font-mono);font-size:12px;resize:vertical;}
+  .sheet-error{color:var(--danger);font-size:12px;min-height:16px;margin:6px 0 0;}
+  .sheet-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+  .btn{flex:1 1 auto;padding:10px 12px;border-radius:9px;border:1px solid var(--card-border);background:var(--card);color:var(--text);font-size:13px;font-weight:700;cursor:pointer;}
+  .btn-primary{background:var(--gold);border-color:var(--gold);color:#1A1305;}
+  .btn-danger{color:var(--danger);}
+  .sheet-status{margin-top:14px;font-size:12px;color:var(--text-muted);border-top:1px solid var(--card-border);padding-top:12px;}
+  .btn-close{display:block;width:100%;margin-top:14px;background:none;border:none;color:var(--text-muted);font-size:13px;padding:8px;cursor:pointer;}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <p class="eyebrow">FAVB Selección</p>
+    <h1>ASTURIAS<span class="accent">·</span>CESA</h1>
+    <p class="subline" id="torneoMeta">Cargando…</p>
+  </header>
+
+  <main id="main"></main>
+</div>
+
+<button class="fab" id="openSheet" aria-label="Opciones de datos">⚙</button>
+
+<div class="sheet-backdrop" id="sheetBackdrop"></div>
+<div class="sheet" id="sheet">
+  <div class="sheet-handle"></div>
+  <h2>Datos</h2>
+  <p class="sheet-help" id="fuenteTxt">—</p>
+  <div class="sheet-actions">
+    <button class="btn btn-primary" id="btnRecargar">Recargar</button>
+    <button class="btn" id="btnVerJson">Ver JSON actual</button>
+  </div>
+  <p class="sheet-help" style="margin-top:16px;">Anular temporalmente (solo en este móvil, sin tocar el repositorio):</p>
+  <textarea id="jsonInput" spellcheck="false" placeholder="Pega aquí un JSON completo para anular los datos remotos…"></textarea>
+  <p class="sheet-error" id="sheetError"></p>
+  <div class="sheet-actions">
+    <button class="btn btn-primary" id="btnAnular">Guardar anulación</button>
+    <button class="btn btn-danger" id="btnQuitarAnulacion">Quitar anulación</button>
+  </div>
+  <p class="sheet-status" id="sheetStatus"></p>
+  <button class="btn-close" id="btnClose">Cerrar</button>
+</div>
+
+<script>
+const CATEGORIAS_ORDEN = ["Cadete Femenino","Cadete Masculino","Infantil Femenino","Infantil Masculino"];
+
+// Respaldo embebido: se usa si no se puede cargar partidos.json (abierto en local, sin
+// conexión, o todavía sin desplegar en GitHub Pages). Una vez en línea, el JSON del
+// repositorio manda siempre sobre esto.
+const DEFAULT_DATA = {
+  "torneo": { "nombre": "CESA 2026", "sede": "Lugo", "fechas": "25–28 junio 2026" },
+  "categorias": {
+    "Cadete Femenino": { "formato": "4 grupos de 4 (liga) + cruces por puesto" },
+    "Cadete Masculino": { "formato": "4 grupos de 4 (liga) + cruces por puesto" },
+    "Infantil Masculino": { "formato": "4 grupos de 4 (liga) + cruces por puesto" },
+    "Infantil Femenino": { "formato": "4 grupos de 4 (liga) + cruces por puesto" }
+  },
+  "partidos": [
+    { "categoria": "Cadete Femenino", "numero": 8, "fase": "Primera Fase · Grupo D", "fecha": "2026-06-25", "hora": "11:30", "local": "ASTURIAS", "visitante": "CASTILLA LA MANCHA", "lugar": "Edif 2 · Pista 6", "setsLocal": 0, "setsVisitante": 0, "estado": "pendiente", "esAsturias": true },
+    { "categoria": "Cadete Femenino", "numero": 10, "fase": "Primera Fase · Grupo D", "fecha": "2026-06-25", "hora": "19:30", "local": "PAIS VASCO", "visitante": "ASTURIAS", "lugar": "Edif 2 · Pista 6", "setsLocal": 0, "setsVisitante": 0, "estado": "pendiente", "esAsturias": true },
+    { "categoria": "Cadete Femenino", "numero": 17, "fase": "Primera Fase · Grupo D", "fecha": "2026-06-26", "hora": "11:30", "local": "ASTURIAS", "visitante": "CANTABRIA", "lugar": "Edif 2 · Pista 5", "setsLocal": 0, "setsVisitante": 0, "estado": "pendiente", "esAsturias": true },
+    { "categoria": "Cadete Femenino", "numero": 26, "fase": "Primera Fase · Grupo D", "fecha": "2026-06-26", "hora": "17:30", "local": "ARAGON", "visitante": "ASTURIAS", "lugar": "Edif 2 · Pista 6", "setsLocal": 0, "setsVisitante": 0, "estado": "pendiente", "esAsturias": true },
+    { "categoria": "Cadete Femenino", "numero": 29, "fase": "Puestos 13º-16º", "fecha": "2026-06-27", "hora": "17:30", "local": "4º Grupo A", "visitante": "4º Grupo D", "lugar": "Edif 2 · Pista 2", "setsLocal": 0, "setsVisitante": 0, "estado": "pendiente", "esAsturias": false, "posibleAsturias": true, "notaPosible": "Solo si Asturias queda 4ª del Grupo D" },
+    { "categoria": "Cadete Femenino", "numero": 31, "fase": "Puestos 9º-12º", "fecha": "2026-06-27", "hora": "19:30", "local": "3º Grupo A", "visitante": "3º Grupo D", "lugar": "Edif 2 · Pista 2", "setsLocal": 0, "setsVisitante": 0, "estado": "pendiente", "esAsturias": false, "posibleAsturias": true, "notaPosible": "Solo si Asturias queda 3ª del Grupo D" },
+    { "categoria": "Cadete Femenino", "numero": 33, "fase": "Puestos 5º-8º", "fecha": "2026-06-27", "hora": "17:30", "local": "2º Grupo A", "visitante": "2º Grupo D", "lugar": "Edif 2 · Pista 5", "setsLocal": 0, "setsVisitante": 0, "estado": "pendiente", "esAsturias": false, "posibleAsturias": true, "notaPosible": "Solo si Asturias queda 2ª del Grupo D" },
+    { "categoria": "Cadete Femenino", "numero": 35, "fase": "Semifinales", "fecha": "2026-06-27", "hora": "17:30", "local": "1º Grupo A", "visitante": "1º Grupo D", "lugar": "Edif 2 · Pista 4", "setsLocal": 0, "setsVisitante": 0, "estado": "pendiente", "esAsturias": false, "posibleAsturias": true, "notaPosible": "Solo si Asturias queda 1ª del Grupo D" },
+    { "categoria": "Cadete Femenino", "numero": 37, "fase": "Puesto 15º-16º", "fecha": "2026-06-28", "hora": "09:30", "local": "Perdedor Partido 29", "visitante": "Perdedor Partido 30", "lugar": "Polideportivo O Palomar · Pista 2", "setsLocal": 0, "setsVisitante": 0, "estado": "pendiente", "esAsturias": false, "posibleAsturias": true, "notaPosible": "Solo si Asturias pierde el Partido 29 (siendo 4ª del Grupo D)" },
+    { "categoria": "Cadete Femenino", "numero": 38, "fase": "Puesto 13º-14º", "fecha": "2026-06-28", "hora": "11:30", "local": "Ganador Partido 29", "visitante": "Ganador Partido 30", "lugar": "Polideportivo O Palomar · Pista 2", "setsLocal": 0, "setsVisitante": 0, "estado": "pendiente", "esAsturias": false, "posibleAsturias": true, "notaPosible": "Solo si Asturias gana el Partido 29 (siendo 4ª del Grupo D)" },
+    { "categoria": "Cadete Femenino", "numero": 39, "fase": "Puesto 11º-12º", "fecha": "2026-06-28", "hora": "09:30", "local": "Perdedor Partido 31", "visitante": "Perdedor Partido 32", "lugar": "Polideportivo O Palomar · Pista 1", "setsLocal": 0, "setsVisitante": 0, "estado": "pendiente", "esAsturias": false, "posibleAsturias": true, "notaPosible": "Solo si Asturias pierde el Partido 31 (siendo 3ª del Grupo D)" },
+    { "categoria": "Cadete Femenino", "numero": 40, "fase": "Puesto 9º-10º", "fecha": "2026-06-28", "hora": "11:30", "local": "Ganador Partido 31", "visitante": "Ganador Partido 32", "lugar": "Polideportivo O Palomar · Pista 1", "setsLocal": 0, "setsVisitante": 0, "estado": "pendiente", "esAsturias": false, "posibleAsturias": true, "notaPosible": "Solo si Asturias gana el Partido 31 (siendo 3ª del Grupo D)" },
+    { "categoria": "Cadete Femenino", "numero": 41, "fase": "Puesto 7º-8º", "fecha": "2026-06-28", "hora": "09:30", "local": "Perdedor Partido 33", "visitante": "Perdedor Partido 34", "lugar": "Edif 1 · Pista 9", "setsLocal": 0, "setsVisitante": 0, "estado": "pendiente", "esAsturias": false, "posibleAsturias": true, "notaPosible": "Solo si Asturias pierde el Partido 33 (siendo 2ª del Grupo D)" },
+    { "categoria": "Cadete Femenino", "numero": 42, "fase": "Puesto 5º-6º", "fecha": "2026-06-28", "hora": "11:30", "local": "Ganador Partido 33", "visitante": "Ganador Partido 34", "lugar": "Edif 1 · Pista 9", "setsLocal": 0, "setsVisitante": 0, "estado": "pendiente", "esAsturias": false, "posibleAsturias": true, "notaPosible": "Solo si Asturias gana el Partido 33 (siendo 2ª del Grupo D)" },
+    { "categoria": "Cadete Femenino", "numero": 43, "fase": "Puesto 3º-4º", "fecha": "2026-06-28", "hora": "09:30", "local": "Perdedor Partido 35", "visitante": "Perdedor Partido 36", "lugar": "Edif 2 · Pista 4", "setsLocal": 0, "setsVisitante": 0, "estado": "pendiente", "esAsturias": false, "posibleAsturias": true, "notaPosible": "Solo si Asturias pierde el Partido 35 (siendo 1ª del Grupo D)" },
+    { "categoria": "Cadete Femenino", "numero": 44, "fase": "Final", "fecha": "2026-06-28", "hora": "11:30", "local": "Ganador Partido 35", "visitante": "Ganador Partido 36", "lugar": "Edif 2 · Pista 4", "setsLocal": 0, "setsVisitante": 0, "estado": "pendiente", "esAsturias": false, "posibleAsturias": true, "notaPosible": "Solo si Asturias gana el Partido 35 (siendo 1ª del Grupo D)" },
+    { "categoria": "Infantil Masculino", "numero": 8, "fase": "Primera Fase · Grupo D", "fecha": "2026-06-25", "hora": "11:30", "local": "ASTURIAS", "visitante": "CASTILLA Y LEON", "lugar": "Edif 1 · Pista 9", "setsLocal": 0, "setsVisitante": 0, "estado": "pendiente", "esAsturias": true },
+    { "categoria": "Infantil Masculino", "numero": 16, "fase": "Primera Fase · Grupo D", "fecha": "2026-06-25", "hora": "19:30", "local": "GALICIA", "visitante": "ASTURIAS", "lugar": "Edif 1 · Pista 9", "setsLocal": 0, "setsVisitante": 0, "estado": "pendiente", "esAsturias": true },
+    { "categoria": "Infantil Masculino", "numero": 24, "fase": "Primera Fase · Grupo D", "fecha": "2026-06-26", "hora": "11:30", "local": "ASTURIAS", "visitante": "BALEARES", "lugar": "Edif 1 · Pista 9", "setsLocal": 0, "setsVisitante": 0, "estado": "pendiente", "esAsturias": true },
+    { "categoria": "Infantil Femenino", "numero": 2, "fase": "Primera Fase · Grupo A", "fecha": "2026-06-25", "hora": "09:30", "local": "ASTURIAS", "visitante": "MELILLA", "lugar": "Pol. Casa do Deporte · Pista 2", "setsLocal": 0, "setsVisitante": 0, "estado": "pendiente", "esAsturias": true },
+    { "categoria": "Infantil Femenino", "numero": 10, "fase": "Primera Fase · Grupo A", "fecha": "2026-06-25", "hora": "17:30", "local": "CASTILLA Y LEON", "visitante": "ASTURIAS", "lugar": "Pol. Casa do Deporte · Pista 2", "setsLocal": 0, "setsVisitante": 0, "estado": "pendiente", "esAsturias": true },
+    { "categoria": "Infantil Femenino", "numero": 18, "fase": "Primera Fase · Grupo A", "fecha": "2026-06-26", "hora": "09:30", "local": "ASTURIAS", "visitante": "BALEARES", "lugar": "Pol. Casa do Deporte · Pista 2", "setsLocal": 0, "setsVisitante": 0, "estado": "pendiente", "esAsturias": true },
+    { "categoria": "Cadete Masculino", "numero": 6, "fase": "Primera Fase · Grupo C", "fecha": "2026-06-25", "hora": "11:30", "local": "MADRID", "visitante": "ASTURIAS", "lugar": "Pabellón Municipal · Pista 2", "setsLocal": 0, "setsVisitante": 0, "estado": "pendiente", "esAsturias": true },
+    { "categoria": "Cadete Masculino", "numero": 13, "fase": "Primera Fase · Grupo C", "fecha": "2026-06-25", "hora": "19:30", "local": "CANTABRIA", "visitante": "ASTURIAS", "lugar": "Pabellón Municipal · Pista 1", "setsLocal": 0, "setsVisitante": 0, "estado": "pendiente", "esAsturias": true },
+    { "categoria": "Cadete Masculino", "numero": 21, "fase": "Primera Fase · Grupo C", "fecha": "2026-06-26", "hora": "11:30", "local": "ASTURIAS", "visitante": "COM. VALENCIANA", "lugar": "Pabellón Municipal · Pista 1", "setsLocal": 0, "setsVisitante": 0, "estado": "pendiente", "esAsturias": true }
+  ]
+};
+
+let DATA = null;
+const ABIERTOS = new Set();
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+
+function esAsturias(p){
+  return p.esAsturias === true || /ASTURIA/i.test(p.local||'') || /ASTURIA/i.test(p.visitante||'');
+}
+function esPosible(p){
+  return p.posibleAsturias === true;
+}
+function relevante(p){
+  return esAsturias(p) || esPosible(p);
+}
+function fechaHora(p){
+  return new Date(`${p.fecha}T${p.hora||'00:00'}:00`);
+}
+function formatFecha(fechaISO){
+  const d = new Date(fechaISO+'T00:00:00');
+  return `${DIAS[d.getDay()]} ${d.getDate()} de ${MESES[d.getMonth()]}`.toUpperCase();
+}
+function nombreEquipo(s){ return (s||'').trim(); }
+
+function venueQuery(lugar){
+  lugar = lugar || '';
+  if(/Edif/i.test(lugar)) return 'Pazo de Ferias y Congresos de Lugo';
+  if(/Casa do Deporte/i.test(lugar)) return 'Pabellón Casa do Deporte Lugo';
+  if(/Pabellón Municipal/i.test(lugar)) return 'Pabellón Municipal Lugo';
+  if(/O Palomar/i.test(lugar)) return 'Polideportivo O Palomar Lugo';
+  return lugar + ' Lugo';
+}
+function mapsLink(lugar){
+  return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(venueQuery(lugar));
+}
+function mapsAnchor(lugar){
+  if(!lugar) return '';
+  return `<a class="maps-link" href="${mapsLink(lugar)}" target="_blank" rel="noopener">📍 Cómo llegar</a>`;
+}
+function estadoPartido(p){
+  if(p.estado === 'jugado') return {texto:'FINALIZADO', clase:'done'};
+  const ahora = new Date();
+  const inicio = fechaHora(p);
+  const diffMs = inicio - ahora;
+  if(diffMs > 0){
+    const diffMin = Math.round(diffMs/60000);
+    if(diffMin < 60) return {texto:`EN ${diffMin} MIN`, clase:'upcoming'};
+    const dias = Math.floor(diffMin/1440);
+    if(dias >= 1) return {texto:`EN ${dias} D ${Math.floor((diffMin%1440)/60)} H`, clase:'upcoming'};
+    const horas = Math.floor(diffMin/60);
+    return {texto:`EN ${horas} H ${diffMin%60} MIN`, clase:'upcoming'};
+  }
+  const elapsedMin = Math.round(-diffMs/60000);
+  if(elapsedMin < 150) return {texto:'EN JUEGO', clase:'live'};
+  return {texto:'PTE. RESULTADO', clase:'pending-result'};
+}
+
+function renderProximoCard(p){
+  const local = nombreEquipo(p.local), visitante = nombreEquipo(p.visitante);
+  const st = estadoPartido(p);
+  return `
+    <div class="next-card">
+      <span class="hero-num">${esPosible(p)&&!esAsturias(p)?'Posible · ':''}#${p.numero ?? '—'} · ${p.fase||''}</span>
+      <div class="hero-teams">${local} <span class="vs">vs</span> ${visitante}</div>
+      <div class="hero-foot">
+        <span class="hero-status ${st.clase}">${st.texto}</span>
+        <span>${p.hora||''}</span>
+        <span>${p.lugar||''}</span>
+        ${mapsAnchor(p.lugar)}
+      </div>
+      ${p.notaPosible ? `<p class="hero-note">${p.notaPosible}</p>` : ''}
+    </div>`;
+}
+
+function renderUltimoLinea(p){
+  const asturiaEsLocal = /ASTURIA/i.test(p.local||'');
+  const setsAsturias = asturiaEsLocal ? p.setsLocal : p.setsVisitante;
+  const setsRival = asturiaEsLocal ? p.setsVisitante : p.setsLocal;
+  const rival = nombreEquipo(asturiaEsLocal ? p.visitante : p.local);
+  const gano = setsAsturias > setsRival;
+  return `
+    <p class="last-result ${gano?'win':'loss'}">
+      <span class="tag">${gano?'GANADO':'PERDIDO'}</span>
+      <span class="score">${setsAsturias}-${setsRival}</span>
+      vs ${rival}
+    </p>`;
+}
+
+function renderAgendaEn(containerEl, partidos){
+  containerEl.innerHTML = '';
+  const porFecha = {};
+  partidos.forEach(p=>{ (porFecha[p.fecha] = porFecha[p.fecha]||[]).push(p); });
+  Object.keys(porFecha).sort().forEach(fecha=>{
+    const h = document.createElement('div');
+    h.className = 'date-header';
+    h.textContent = formatFecha(fecha);
+    containerEl.appendChild(h);
+    porFecha[fecha].forEach(p=>{
+      const local = nombreEquipo(p.local), visitante = nombreEquipo(p.visitante);
+      const confirmado = esAsturias(p);
+      const card = document.createElement('div');
+      card.className = 'match-card'+(confirmado?'':' posible');
+      const resultado = p.estado==='jugado'
+        ? `<span class="match-result">${p.setsLocal}-${p.setsVisitante}</span>`
+        : `<span>${p.hora||''}</span>`;
+      card.innerHTML = `
+        <div class="match-top">
+          <span class="badge ${confirmado?'confirmado':'posible'}">${confirmado?'Confirmado':'Posible'}</span>
+          ${resultado}
+        </div>
+        <div class="match-teams">${local} <span class="vs">vs</span> ${visitante}</div>
+        <div class="match-meta">
+          <span class="mono">#${p.numero ?? '—'}</span>
+          <span>${p.fase||''}</span>
+          <span>${p.lugar||''}</span>
+        </div>
+        <div class="match-meta">${mapsAnchor(p.lugar)}</div>
+        ${p.notaPosible ? `<div class="match-note">${p.notaPosible}</div>` : ''}
+      `;
+      containerEl.appendChild(card);
+    });
+  });
+}
+
+function render(){
+  const meta = DATA && DATA.torneo ? DATA.torneo : {};
+  document.getElementById('torneoMeta').textContent =
+    [meta.nombre, meta.sede, meta.fechas].filter(Boolean).join(' · ') || 'Sin datos cargados';
+
+  const mainEl = document.getElementById('main');
+  mainEl.innerHTML = '';
+
+  if(!DATA || !DATA.partidos){
+    mainEl.innerHTML = `<div class="empty"><strong>Sin partidos cargados</strong>Pulsa ⚙ y comprueba la fuente de datos.</div>`;
+    return;
+  }
+
+  CATEGORIAS_ORDEN.forEach((cat, idx)=>{
+    const partidosCat = DATA.partidos
+      .filter(p=>p.categoria===cat && relevante(p))
+      .sort((a,b)=>fechaHora(a)-fechaHora(b));
+
+    const proximo = partidosCat.find(p=>p.estado!=='jugado');
+    const jugados = partidosCat.filter(p=>p.estado==='jugado');
+    const ultimo = jugados.length ? jugados[jugados.length-1] : null;
+
+    const block = document.createElement('div');
+    block.className = 'cat-block';
+
+    let cuerpo;
+    if(!partidosCat.length){
+      cuerpo = `<p class="empty-cat">Sin partidos cargados todavía</p>`;
+    }else if(proximo){
+      cuerpo = renderProximoCard(proximo) + (ultimo ? renderUltimoLinea(ultimo) : '');
+    }else{
+      cuerpo = `<p class="empty-cat">Fase terminada</p>` + (ultimo ? renderUltimoLinea(ultimo) : '');
+    }
+
+    block.innerHTML = `
+      <p class="cat-name">${cat}</p>
+      ${cuerpo}
+      ${partidosCat.length ? `<button class="ver-todos" data-idx="${idx}">${ABIERTOS.has(idx)?'Ocultar partidos ▴':'Ver todos los partidos ('+partidosCat.length+') ▾'}</button>
+      <div class="cat-agenda" id="agenda-${idx}" style="display:${ABIERTOS.has(idx)?'block':'none'};"></div>` : ''}
+    `;
+    mainEl.appendChild(block);
+
+    if(partidosCat.length){
+      const btn = block.querySelector('.ver-todos');
+      const agendaEl = block.querySelector(`#agenda-${idx}`);
+      if(ABIERTOS.has(idx)){
+        renderAgendaEn(agendaEl, partidosCat);
+      }
+      btn.onclick = ()=>{
+        const abierto = ABIERTOS.has(idx);
+        if(abierto){ ABIERTOS.delete(idx); }
+        else{ ABIERTOS.add(idx); renderAgendaEn(agendaEl, partidosCat); }
+        agendaEl.style.display = abierto ? 'none' : 'block';
+        btn.textContent = abierto ? `Ver todos los partidos (${partidosCat.length}) ▾` : 'Ocultar partidos ▴';
+      };
+    }
+  });
+}
+
+async function cargarDatos(){
+  let remoto = null;
+  try{
+    const resp = await fetch('partidos.json?t='+Date.now(), {cache:'no-store'});
+    if(resp.ok){
+      remoto = await resp.json();
+      localStorage.setItem('cache_partidos', JSON.stringify(remoto));
+      localStorage.setItem('cache_fecha', new Date().toLocaleString('es-ES'));
+    }
+  }catch(e){ /* sin conexión */ }
+
+  const anulacion = localStorage.getItem('override_partidos');
+  if(anulacion){
+    try{ return {datos: JSON.parse(anulacion), fuente:'Anulación local activa'}; }catch(e){}
+  }
+  if(remoto) return {datos:remoto, fuente:'En línea · actualizado ahora'};
+  const cache = localStorage.getItem('cache_partidos');
+  if(cache){
+    try{ return {datos: JSON.parse(cache), fuente:'Sin conexión · caché de '+(localStorage.getItem('cache_fecha')||'')}; }catch(e){}
+  }
+  return {datos: DEFAULT_DATA, fuente:'Datos de respaldo incluidos en la página (todavía no hay partidos.json en línea)'};
+}
+
+async function init(){
+  const {datos, fuente} = await cargarDatos();
+  DATA = datos;
+  document.getElementById('fuenteTxt').textContent = fuente;
+  render();
+}
+
+async function refrescarEnSegundoPlano(){
+  try{
+    const {datos, fuente} = await cargarDatos();
+    if(datos){
+      DATA = datos;
+      document.getElementById('fuenteTxt').textContent = fuente;
+      render();
+    }
+  }catch(e){ /* se mantiene lo que ya había en pantalla */ }
+}
+
+document.getElementById('openSheet').onclick = ()=>{
+  document.getElementById('sheet').classList.add('show');
+  document.getElementById('sheetBackdrop').classList.add('show');
+};
+document.getElementById('btnClose').onclick =
+document.getElementById('sheetBackdrop').onclick = ()=>{
+  document.getElementById('sheet').classList.remove('show');
+  document.getElementById('sheetBackdrop').classList.remove('show');
+};
+document.getElementById('btnRecargar').onclick = async ()=>{
+  document.getElementById('sheetStatus').textContent = 'Recargando…';
+  await init();
+  document.getElementById('sheetStatus').textContent = 'Recargado.';
+};
+document.getElementById('btnVerJson').onclick = ()=>{
+  document.getElementById('jsonInput').value = JSON.stringify(DATA, null, 2);
+};
+document.getElementById('btnAnular').onclick = ()=>{
+  const txt = document.getElementById('jsonInput').value.trim();
+  const errEl = document.getElementById('sheetError');
+  try{
+    const parsed = JSON.parse(txt);
+    if(!parsed.partidos) throw new Error('Falta la clave "partidos"');
+    localStorage.setItem('override_partidos', JSON.stringify(parsed));
+    errEl.textContent = '';
+    document.getElementById('sheetStatus').textContent = 'Anulación guardada en este móvil.';
+    init();
+  }catch(e){
+    errEl.textContent = 'JSON no válido: '+e.message;
+  }
+};
+document.getElementById('btnQuitarAnulacion').onclick = ()=>{
+  localStorage.removeItem('override_partidos');
+  document.getElementById('sheetStatus').textContent = 'Anulación eliminada. Usando datos remotos/caché.';
+  init();
+};
+
+init();
+setInterval(render, 30000);
+setInterval(()=>{
+  if(document.visibilityState === 'visible') refrescarEnSegundoPlano();
+}, 90000);
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible') refrescarEnSegundoPlano();
+});
+</script>
+</body>
+</html>
